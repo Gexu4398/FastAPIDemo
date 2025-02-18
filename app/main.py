@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -8,6 +11,23 @@ from . import models, schemas, database
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
+
+# 添加CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 在生产环境中应该设置具体的域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 挂载静态文件目录
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# 添加根路径重定向
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/static/index.html")
 
 # 获取所有城市
 @app.get("/cities/", response_model=List[schemas.City])
